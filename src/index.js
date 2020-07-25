@@ -1,70 +1,73 @@
-import{ createStore } from "redux";
+import { createStore } from "redux";
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-const add = document.getElementById("add")
-const minus = document.getElementById("minus")
-const number = document.querySelector("span")
 
-const ADD = "ADD";
-const MINUS = "MINUS";
+const ADD_TODO = "ADD_TODO";
+const DELETE_TODO = "DELETE_TODO";
 
-const countModifier = (state = 0, action) => {
-  switch(action.type){
-    case ADD :
-      return state = state +1
-    case MINUS :
-      return state = state - 1
-    default : 
+const addToDo = text => {
+  return { type: ADD_TODO, text };
+}
+
+const deleteTodo = id => {
+  return {type: DELETE_TODO, id}
+}
+//filter method를 활용해서, 해당 데이터를 삭제한다.
+
+const reducer = (state = [], action) => {
+console.log(action);
+  switch (action.type) {
+    case ADD_TODO:
+      return [{text: action.text, id: Date.now() }, ...state];
+      //데이터 변화를 위해서 새로운 빈 배열의 state를 만들고, 새로운 state를 그곳에 집어넣어주기
+    case DELETE_TODO:
+      return state.filter(toDo => toDo.id != action.id);
+    default:
       return state;
   }
 };
-//처음으로 데이터를 바꿔주는 역할을 한다.
-//그리고 리턴하는 것은 앱에 있는 데이터이다. 그리고 유일하게 데이터를 변환할 수 있는 함수이다.
-//state라는 데이터에 디폴트 값을 인자로 준다. 
-//reducer에서 state인자가 더해지거나 빼지는 것과 같은 행위를 가능하게 하는 것이 바로 액션이다.
 
-const countStore = createStore(countModifier);
-//createStore은 reducer라는 함수를 인자로 받아야 한다.
+//store을 수정할 수 잇는 방법은 액션 뿐이다.
+//immutable하다. 즉 store에 직접 접근해서 그 안의 데이터를 직접 변경할 수 없다. 
 
-number.innerText = 0;
+const store = createStore(reducer);
+store.subscribe(() => console.log(store.getState()))
 
-const onChange = () => {
-  number.innerText = countStore.getState()
+const paintToDos  = () => {
+  const toDos = store.getState();
+  ul.innerHTML = "";
+  toDos.forEach(toDos=> {
+    const li = document.createElement("li")
+    const btn = document.createElement("button")
+    btn.innerText = Delete;
+    btn.addEventListener("click", dispatchDeleteTodo)
+    li.id = toDo.id;
+    li.innerText = toDo.text;
+    ul.appendChild(btn)
+    ul.appendChild(li)
+  })
 }
 
-countStore.subscribe(onChange);
-//subscribe를 통해 store의 변화를 감지.
+store.subscribe(paintToDos)
 
-//action은 오브젝트 형태만을 허용한다.
-const handleAdd = () => {
-  countStore.dispatch({type : ADD})
+const dispatchAddToDo = text => {
+  store.dispatch(addToDo(text));
 }
 
-const handleMinus = () => {
-  countStore.dispatch({type : MINUS})
+const dispatchDeleteTodo = (e) => {
+  const id = parseInt(e.target.parentNode.id);
+  store.dispatch(deleteTodo(id))
 }
 
-console.log(countStore.getState());
-
-// let count = 0;//이 앱에서 유일하게 변하는 데이터 부분. 하단의 코드의 모든 목적들은 이 데이터를 수정하기 위함이다.
-// number.innerText = count;
-
-// //값이라는 데이터를 업데이트
-// const updateText = () => {
-//   number.innerText = count
-// }
-
-// //값을 변화
-// const handleAdd = () => {
-//   count = count+1;
-//   updateText();
-// }
-
-// const handleMinus = () => {
-//   count = count-1
-//   updateText();
-// }
+const onSubmit = e => {
+  e.preventDefault();
+  const toDo = input.value;
+  input.value = "";
+  dispatchAddToDo();
+  //액션을 취한 후에, submit 부분에 어떤 것을 넣을 것인지, 어떤 내용을 넣을 것인지에 대해 커뮤니케이션 하는 것. text로 todo를 넣을 것이라고 함.
+};
 
 
-add.addEventListener("click", handleAdd)
-minus.addEventListener("click", handleMinus)
-
+form.addEventListener("submit", onSubmit);
